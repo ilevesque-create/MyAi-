@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MyAI — Personal AI Workspace</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+<style>
+:root{--bg:#080b14;--panel:#0e1422;--panel2:#121c2e;--line:#24344d;--text:#e6f0ff;--muted:#8da4c4;--cyan:#45e0ff;--blue:#8b9cff;--green:#57f0bd;--danger:#ff7185}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(ellipse at 50% -15%,#1c3154 0,transparent 52%),var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;letter-spacing:.005em}
+header{height:68px;background:rgba(8,11,20,.76);backdrop-filter:blur(18px);padding:0 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ffffff12;box-shadow:0 8px 30px #0003;position:sticky;top:0;z-index:5}
+header h1{font-size:1.1rem;letter-spacing:.08em;text-transform:uppercase}header h1 span{color:var(--cyan);font-size:.75rem;margin-left:8px}
+#main{flex:1;min-height:0}
+.hero{display:none!important}
+.workspace{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:calc(100vh - 64px)}
+#sidebar{background:rgba(10,15,27,.72);border-right:1px solid #ffffff10;padding:20px 14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.side-label{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:4px 8px}
+#newChatBtn{width:100%;text-align:left;background:linear-gradient(120deg,#173b4b,#202b4c);border:1px solid #39718a;color:#dffaff;border-radius:12px;padding:13px;font-weight:650;box-shadow:0 8px 24px #0002}
+#newChatBtn:before{content:"+ ";color:var(--cyan);font-size:1.15rem}
+#chatList{display:flex;flex-direction:column;gap:5px;overflow-y:auto;min-height:0}
+.chat-row{display:flex;align-items:center;gap:4px;min-width:0;border:1px solid transparent;border-radius:11px}.chat-row:hover{background:#ffffff08}.chat-item{display:block;flex:1;min-width:0;text-align:left;background:transparent;border:1px solid transparent;color:#a9bbd6;padding:10px;border-radius:9px;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}.delete-chat{flex:0 0 32px;width:32px;padding:7px 0;background:transparent;border:1px solid transparent;color:#8193ad;border-radius:8px;font-size:.95rem;opacity:.6}.chat-row:hover .delete-chat,.chat-row:focus-within .delete-chat{opacity:1}.delete-chat:hover{background:#ff71851a;border-color:#ff71854d;color:var(--danger)}
+.chat-item:before{content:"◈";color:#6686a8}
+.chat-item.active{background:#14253a;border-color:#28506c;color:#e8faff}.chat-row:has(.chat-item.active){background:#14253a;border-color:#28506c}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:12px}
+#keyBox,#memoryBox{width:100%;margin:0;padding:13px;background:linear-gradient(145deg,#101a2b,#0c1320);border:1px solid #ffffff12;border-radius:14px;font-size:.82rem;color:#b8c9e2}
+#keyBox{margin-bottom:10px}
+#keyBox input{width:100%;padding:10px;margin:9px 0;background:#080e19;color:var(--text);border:1px solid #30415c;border-radius:8px;outline:none}
+#keyBox input:focus,#in:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #45e0ff17}
+#keyBox a,#memoryBox a{color:var(--cyan)}
+#keyBox .warn{margin-top:9px;font-size:.7rem;line-height:1.45;color:#d2ad66}
+#sidebar button.small{padding:8px 10px;font-size:.75rem;border-radius:7px}
+#memoryBox{line-height:1.5}
+#chatArea{display:flex;flex-direction:column;min-width:0;min-height:calc(100vh - 64px);padding:0 max(16px,calc((100% - 900px)/2))}
+.chat-topline{height:56px;border-bottom:1px solid #1d2b40;display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px #57f0bd88;margin-right:7px}
+#chat{flex:1;overflow-y:auto;width:100%;padding:24px 0;display:flex;flex-direction:column;gap:14px;min-height:260px}
+.msg{max-width:min(82%,760px);padding:15px 17px;border:1px solid var(--line);border-radius:16px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem;box-shadow:0 8px 22px #0002;animation:messageIn .18s ease-out}@keyframes messageIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.me{align-self:flex-end;background:linear-gradient(135deg,#17364a,#16233a);border-color:#28617b;color:#e7faff;border-bottom-right-radius:4px}
+.myai{align-self:flex-start;background:linear-gradient(145deg,#111a2a,#0d1421);color:#e2ebf8;border-bottom-left-radius:4px}
+#inputBar{width:100%;margin:0 auto;padding:14px 0 22px;display:flex;gap:10px;position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 22%)}
+#in{flex:1;min-width:0;padding:15px 18px;border-radius:14px;border:1px solid #30415c;font-size:.95rem;background:#0b1220;color:var(--text);outline:none;box-shadow:0 10px 30px #0002}
+button{background:linear-gradient(120deg,var(--cyan),#9aabff);border:0;border-radius:10px;padding:11px 17px;font-weight:750;cursor:pointer;color:#07111d;transition:transform .15s,filter .15s}
+button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+#loginCard{max-width:440px;margin:8vh auto;background:var(--panel);color:var(--text);padding:1.6rem;border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 80px #0005}
+#loginCard p{color:var(--muted)!important}#loginCard input{width:100%;padding:12px;margin:.4rem 0;border-radius:9px;border:1px solid #30415c;background:#080e19;color:var(--text)}
+@media(max-width:760px){header{padding:0 14px;height:60px}header h1{font-size:.95rem}.workspace{grid-template-columns:1fr;grid-template-rows:auto 1fr}#sidebar{border-right:0;border-bottom:1px solid var(--line);padding:10px;gap:8px}#newChatBtn{padding:10px}#chatList{flex-direction:row;max-height:48px;overflow-x:auto}#chatList .chat-row{width:auto;max-width:220px;flex-shrink:0}#chatList .chat-item{width:auto;max-width:180px;flex-shrink:1}.delete-chat{flex-basis:28px;width:28px}.sidebar-bottom{display:grid;grid-template-columns:1fr;gap:8px}#keyBox{margin:0}#chatArea{min-height:65vh;padding:0 14px}.msg{max-width:94%}}
+.warn{margin-top:9px;font-size:.72rem;line-height:1.5;color:#a7b8d2}#keyBox b{display:inline-block;margin-bottom:5px;color:#e8f3ff}#chatList:empty:after{content:'Your conversations will appear here';padding:8px;color:#647995;font-size:.78rem;line-height:1.5}\n</style>
+</head>
+<body>
+<header>
+<h1>◈ MYAI <span>PERSONAL AI WORKSPACE</span></h1>
+<div><span id="userInfo" style="font-size:.85rem;color:#7dd3fc;margin-right:.6rem"></span><button onclick="logout()" class="small" style="background:transparent;border:1px solid #7dd3fc;color:#7dd3fc;">Log Out</button></div>
+</header>
+
+<div id="loginCard">
+<h2>Welcome to MyAI V2</h2>
+<p style="font-size:.9rem;color:#555;margin:.4rem 0">Log in with your Ink & Moon account.</p>
+<input id="email" placeholder="Email" type="email"/><input id="pass" placeholder="Password" type="password"/>
+<button style="width:100%;margin-top:.6rem" onclick="login()">Log In</button>
+<p id="msg" style="color:#c0392b;font-size:.9rem"></p>
+</div>
+
+<div id="main" style="display:none;flex:1;flex-direction:column">
+<div class="workspace">
+  <aside id="sidebar">
+    <button id="newChatBtn" onclick="newChat()">New chat</button>
+    <div class="side-label">Workspace / History</div>
+    <div id="chatList"></div>
+    <div class="sidebar-bottom">
+      <div id="keyBox">
+        <b>✦ MyAI Intelligence</b><br/>
+        <span id="keyStatus">Checking secure AI connection…</span>
+        <div class="warn">AI access is provided securely by MyAI. Your API key is never stored in this browser.</div>
+      </div>
+      <div id="memoryBox">◉ Memory: <span id="memText">learning...</span> <a href="#" onclick="editMemory();return false;">edit</a></div>
+    </div>
+  </aside>
+  <section id="chatArea">
+    <div class="chat-topline"><span id="activeChatTitle">New conversation</span><span><i class="status-dot"></i><span id="systemStatus">Secure AI connected</span></span></div>
+    <div id="chat"></div>
+    <div id="inputBar"><input id="in" placeholder="Message MyAI..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"/><button onclick="send()">Send ↗</button></div>
+  </section>
+</div>
+</div>
+
+<script>
+// *** ADD YOUR FIREBASE KEYS HERE IF DIFFERENT - currently using ink-and-moon ***
+const firebaseConfig = {
+  apiKey: "AIzaSyApBrPRZk7e7M6uOU3-eNcX7nmH_sXkjKI",
+  authDomain: "ink-and-moon.firebaseapp.com",
+  projectId: "ink-and-moon",
+  storageBucket: "ink-and-moon.firebasestorage.app",
+  messagingSenderId: "943504163747",
+  appId: "1:943504163747:web:8eb03578746b4737d01016"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.firestore();
+const functions=firebase.app().functions('us-central1');
+const chatWithGroq=functions.httpsCallable('chatWithGroq');
+let me=null, myMemory={about:"",likes:""};
+
+function updateKeyStatus(){
+  const el=document.getElementById('keyStatus');
+  if(el) el.textContent='🔒 Shared AI service — key protected on the server';
+}
+
+let activeChatId = null;
+let chatGroups = {};
+let chatDocsCache = [];
+
+auth.onAuthStateChanged(async u=>{
+  updateKeyStatus();
+  if(!u){document.getElementById('loginCard').style.display='block';document.getElementById('main').style.display='none';return}
+  me=u;
+  document.getElementById('loginCard').style.display='none';
+  document.getElementById('main').style.display='flex';
+  document.getElementById('userInfo').textContent=(u.displayName||u.email||'Account');
+  try{await loadMemory();}catch(e){}
+  try{await loadChats();}catch(e){}
+  if(!activeChatId) newChat(false);
+});
+async function login(){
+  try{await auth.signInWithEmailAndPassword(document.getElementById('email').value,document.getElementById('pass').value)}
+  catch(e){document.getElementById('msg').textContent=e.message}
+}
+async function logout(){activeChatId=null;await auth.signOut();location.reload()}
+async function loadMemory(){
+  try{
+    const d=await db.collection('myai_memory').doc(me.uid).get();
+    if(d.exists)myMemory=d.data();
+    document.getElementById('memText').textContent=myMemory.about?`${myMemory.about} | likes: ${myMemory.likes||'?'}`:'nothing yet';
+  }catch(e){document.getElementById('memText').textContent='memory blocked by Rules - still chatting!';}
+}
+async function editMemory(){
+  const a=prompt('What should MyAI remember?',myMemory.about||'');
+  if(a===null)return;
+  myMemory.about=a||'';
+  try{await db.collection('myai_memory').doc(me.uid).set({...myMemory,updated:new Date()});}catch(e){alert('Add MyAI rules in Firestore');}
+  loadMemory();
+}
+function makeChatId(){return 'chat_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
+function titleForChat(docs){
+  const first=docs.find(x=>x.from==='me');
+  return first ? (first.text||'New conversation').replace(/\\s+/g,' ').slice(0,34) : 'New conversation';
+}
+async function loadChats(){
+  try{
+    const s=await db.collection('myai_chats').where('uid','==',me.uid).limit(200).get();
+    chatDocsCache=s.docs.map(d=>({id:d.id,...d.data()}));
+    chatGroups={};
+    chatDocsCache.forEach(x=>{
+      const id=x.chatId||'legacy';
+      if(!chatGroups[id])chatGroups[id]=[];
+      chatGroups[id].push(x);
+    });
+    Object.keys(chatGroups).forEach(id=>chatGroups[id].sort((a,b)=>(a.at?.seconds||0)-(b.at?.seconds||0)));
+    renderChatList();
+    const ids=Object.keys(chatGroups).sort((a,b)=>{
+      const at=chatGroups[a][chatGroups[a].length-1]?.at?.seconds||0;
+      const bt=chatGroups[b].at(-1)?.at?.seconds||0;
+      return bt-at;
+    });
+    if(ids.length) await openChat(ids[0],false);
+  }catch(e){console.warn('Could not load chat history',e);}
+}
+function renderChatList(){
+  const list=document.getElementById('chatList'); list.replaceChildren();
+  const ids=Object.keys(chatGroups).sort((a,b)=>{
+    const at=chatGroups[a][chatGroups[a].length-1]?.at?.seconds||0;
+    const bt=chatGroups[b][chatGroups[b].length-1]?.at?.seconds||0;
+    return bt-at;
+  });
+  ids.forEach(id=>{
+    const row=document.createElement('div'); row.className='chat-row';
+    const b=document.createElement('button');
+    b.className='chat-item'+(id===activeChatId?' active':'');
+    b.textContent=titleForChat(chatGroups[id]); b.title=b.textContent;
+    b.onclick=()=>openChat(id);
+    const del=document.createElement('button');
+    del.className='delete-chat'; del.type='button'; del.textContent='×';
+    del.title='Delete this conversation'; del.setAttribute('aria-label','Delete conversation: '+b.textContent);
+    del.onclick=(event)=>{event.stopPropagation();deleteChat(id);};
+    row.append(b,del); list.appendChild(row);
+  });
+}
+async function deleteChat(id){
+  const docs=chatGroups[id]||[];
+  if(!docs.length)return;
+  const title=titleForChat(docs);
+  if(!confirm('Delete "'+title+'" and all its messages? This cannot be undone.'))return;
+  try{
+    // Delete only this signed-in user's messages for the selected conversation.
+    let snap=await db.collection('myai_chats').where('uid','==',me.uid).where('chatId','==',id).get();
+    while(!snap.empty){
+      const batch=db.batch();
+      snap.docs.slice(0,450).forEach(doc=>batch.delete(doc.ref));
+      await batch.commit();
+      if(snap.size<=450)break;
+      snap=await db.collection('myai_chats').where('uid','==',me.uid).where('chatId','==',id).get();
+    }
+    delete chatGroups[id];
+    chatDocsCache=chatDocsCache.filter(x=>x.chatId!==id);
+    if(activeChatId===id){
+      activeChatId=null;
+      document.getElementById('chat').replaceChildren();
+      document.getElementById('activeChatTitle').textContent='New conversation';
+      newChat(false);
+      const remaining=Object.keys(chatGroups).sort((a,b)=>{
+        const at=chatGroups[a][chatGroups[a].length-1]?.at?.seconds||0;
+        const bt=chatGroups[b][chatGroups[b].length-1]?.at?.seconds||0;
+        return bt-at;
+      });
+      if(remaining.length)await openChat(remaining[0]);
+    }
+    renderChatList();
+  }catch(e){
+    console.error('Delete chat failed',e);
+    alert('Could not delete this conversation. Check your Firestore security rules and try again.');
+  }
+}
+function newChat(showGreeting=true){
+  activeChatId=makeChatId();
+  document.getElementById('chat').replaceChildren();
+  document.getElementById('activeChatTitle').textContent='New conversation';
+  document.getElementById('in').value='';
+  renderChatList();
+  if(showGreeting) addBubble('myai','New conversation initialized. What would you like to work on?');
+}
+async function openChat(id,rerender=true){
+  activeChatId=id;
+  document.getElementById('chat').replaceChildren();
+  const docs=chatGroups[id]||[];
+  docs.forEach(x=>addBubble(x.from,x.text));
+  document.getElementById('activeChatTitle').textContent=titleForChat(docs);
+  renderChatList();
+}
+function addBubble(who,text){
+  const c=document.getElementById('chat');
+  const d=document.createElement('div'); d.className='msg '+(who==='me'?'me':'myai'); d.textContent=text;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+async function saveChatMessage(who,text){
+  if(!me)return;
+  const record={uid:me.uid,chatId:activeChatId||'legacy',from:who,text,at:new Date()};
+  try{
+    const ref=await db.collection('myai_chats').add(record);
+    const saved={id:ref.id,...record,at:{seconds:Math.floor(Date.now()/1000)}};
+    if(!chatGroups[record.chatId])chatGroups[record.chatId]=[];
+    chatGroups[record.chatId].push(saved);
+    renderChatList();
+    document.getElementById('activeChatTitle').textContent=titleForChat(chatGroups[record.chatId]);
+  }catch(e){console.warn('Could not save chat message',e);}
+}
+async function myaiSay(t){addBubble('myai',t);await saveChatMessage('myai',t);}
+async function send(){
+  const inp=document.getElementById('in'); const text=inp.value.trim(); if(!text)return; inp.value='';
+  addBubble('me',text);
+  await saveChatMessage('me',text);
+  const thinking=document.createElement('div'); thinking.className='msg myai'; thinking.textContent='Processing request…'; document.getElementById('chat').appendChild(thinking);
+  let reply;
+  try{ reply = await myaiReplyAsync(text); }
+  catch(e){ reply = 'Request failed: '+e.message; }
+  thinking.remove();
+  await myaiSay(reply);
+}
+async function searchWiki(query){
+  const q=encodeURIComponent(query);
+  const s=await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&srlimit=1`).then(r=>r.json());
+  const title=s?.query?.search?.[0]?.title;
+  if(!title) return null;
+  const sum=await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`).then(r=>r.json());
+  if(!sum.extract) return null;
+  return `📚 ${sum.title}\n\n${sum.extract.slice(0,700)}`;
+}
+async function callGroq(userText){
+  const history=(chatGroups[activeChatId]||[])
+    .slice(-12)
+    .map(m=>({role:m.from==='me'?'user':'assistant',content:String(m.text||'').slice(0,5000)}));
+  // The current user message is saved before this call, so avoid duplicating it.
+  while(history.length && history[history.length-1].role==='user' &&
+        history[history.length-1].content===userText) history.pop();
+  const result=await chatWithGroq({
+    message:userText,
+    history,
+    memory:{about:myMemory.about||'',likes:myMemory.likes||''}
+  });
+  return result.data?.reply || 'No answer from MyAI.';
+}
+async function myaiReplyAsync(t){
+  const low=t.toLowerCase().trim();
+  if(low.startsWith('search ')||low.startsWith('who is')||low.startsWith('what is')||low.startsWith('tell me about')){
+    let q=t.replace(/^(search|who is|what is|tell me about)\s*/i,'').trim();
+    const r=await searchWiki(q);
+    return r||`Couldn't find "${q}" on Wikipedia.`;
+  }
+  if(low.startsWith('analyze')){
+    const words=t.split(/\s+/).length;
+    return `📊 Quick analysis: ~${words} words. ${words<20?'Short & punchy - add one vivid image!':'Nice length!'}`;
+  }
+  if(low.includes('i am ')||low.includes('i love ')||low.includes('i like ')||low.includes('my name is')){
+    myMemory.about=(myMemory.about?myMemory.about+' | ':'')+t;
+    try{db.collection('myai_memory').doc(me.uid).set({...myMemory,updated:new Date()});}catch(e){}
+    loadMemory();
+    return `Got it, I'll remember that! 💙`;
+  }
+  // All authenticated accounts use the same server-side Groq key.
+  try{return await callGroq(t);}
+  catch(e){
+    console.error('MyAI request failed',e);
+    return `I couldn't reach the AI service right now. ${e.message||'Please try again in a moment.'}`;
+  }
+}
+updateKeyStatus();
+</script>
+</body>
+</html>
