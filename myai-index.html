@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080d18">
+<title>MyAI — Your workspace</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#080d18;--panel:#0e1727;--line:#23344d;--text:#eaf2ff;--muted:#91a4bf;--cyan:#62e6f5;--violet:#9a9cff;--good:#62e6b2;--danger:#ff8295}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 65% -20%,#1a3655 0,transparent 48%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+#loginView{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(440px,100%);padding:30px;border:1px solid var(--line);border-radius:24px;background:#0e1727ed;box-shadow:0 28px 90px #0007}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.13em}.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#07111c;font-size:21px}
+.muted{color:var(--muted)}.login-card h1{font-size:28px;margin:22px 0 4px}.field,.select{width:100%;padding:13px 14px;margin-top:12px;border:1px solid var(--line);border-radius:12px;background:#080f1c;color:var(--text);outline:none}
+.primary{border:0;border-radius:12px;padding:12px 17px;background:linear-gradient(120deg,var(--cyan),#a4a7ff);color:#07111c;font-weight:800}.login-card .primary{width:100%;margin-top:16px}
+.linkrow{display:flex;justify-content:space-between;margin-top:12px;font-size:13px}.linkrow button{background:none;border:0;color:var(--cyan)}
+#loginError{color:var(--danger);min-height:22px;font-size:13px}
+#app{display:none;min-height:100vh}.shell{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;padding:22px 16px;background:#0b1321d9;border-right:1px solid #ffffff12;display:flex;flex-direction:column;gap:14px}
+.new-chat{width:100%;text-align:left;padding:13px 14px;border:1px solid #3a6278;border-radius:13px;color:#eaffff;background:linear-gradient(120deg,#123447,#202747);font-weight:700}
+.search{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#080f1c;color:var(--text)}
+.chat-list{overflow:auto;display:flex;flex-direction:column;gap:5px;min-height:50px;flex:1}.chat-row{display:flex;gap:4px;align-items:center;border:1px solid transparent;border-radius:11px}
+.chat-row.active{background:#17283d;border-color:#294b66}.chat-title{flex:1;min-width:0;text-align:left;border:0;background:transparent;color:#b8c8de;padding:10px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.delete{border:0;background:transparent;color:#7286a0;padding:8px 10px;border-radius:8px}.side-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.account{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.row{display:flex;gap:8px}.ghost{background:transparent;color:#a9bdd6;border:1px solid var(--line);border-radius:10px;padding:9px 12px;flex:1}
+.main{min-width:0;display:flex;flex-direction:column;min-height:100vh}
+.topbar{min-height:68px;display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px clamp(18px,4vw,54px);border-bottom:1px solid #ffffff10;background:#080d18a8;position:sticky;top:0;z-index:2;flex-wrap:wrap}
+.controls{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}.controls select{background:#101a2a;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+.status{font-size:12px;color:var(--good)}
+.content{width:min(920px,100%);margin:0 auto;padding:0 26px;flex:1;display:flex;flex-direction:column}
+.welcome{margin:auto auto 20px;text-align:center;max-width:640px;padding:42px 0}.orb{width:64px;height:64px;border-radius:22px;margin:0 auto 20px;display:grid;place-items:center;font-size:30px;color:#07111c;background:linear-gradient(135deg,var(--cyan),var(--violet))}
+.messages{padding:28px 0 18px;display:flex;flex-direction:column;gap:14px}
+.message{max-width:min(88%,780px);padding:13px 16px;border:1px solid var(--line);border-radius:17px;overflow-wrap:anywhere;line-height:1.65}
+.message.user{align-self:flex-end;background:linear-gradient(135deg,#17394b,#1b2944);border-color:#315c77;border-bottom-right-radius:5px;white-space:pre-wrap}
+.message.ai{align-self:flex-start;background:#111c2c;border-bottom-left-radius:5px}
+.who{display:block;color:var(--cyan);font-size:10px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:6px}
+.msg-body p{margin:0 0 8px}.msg-body pre{background:#070d18;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font-size:13px}
+.msg-body code{font-family:ui-monospace,Menlo,Consolas,monospace}.msg-body ul{margin:6px 0;padding-left:20px}
+.msg-actions{margin-top:8px;display:flex;gap:8px}.msg-actions button{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;font-size:12px;padding:4px 9px}
+.composer-wrap{position:sticky;bottom:0;padding:18px 0 25px;background:linear-gradient(180deg,transparent,var(--bg) 22%)}
+.composer{display:flex;align-items:flex-end;gap:10px;padding:9px;border:1px solid #344762;border-radius:18px;background:#101a2a}
+.composer textarea{flex:1;resize:none;max-height:180px;min-height:46px;border:0;outline:0;background:transparent;color:var(--text);padding:11px 10px}
+.send{min-width:48px;height:44px;border-radius:13px}.stop{background:transparent;color:var(--danger);border:1px solid var(--line);border-radius:13px;height:44px;padding:0 14px;display:none}
+.hint{text-align:center;color:#7185a0;font-size:11px;margin-top:9px}.hidden{display:none!important}
+.modal-back{position:fixed;inset:0;background:#000a;display:grid;place-items:center;padding:20px;z-index:10}.modal{width:min(560px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+.modal textarea{width:100%;min-height:70px;margin-top:8px;background:#080f1c;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px}
+@media(max-width:760px){.shell{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.chat-list{flex-direction:row;max-height:48px}}
+</style>
+</head>
+<body>
+<section id="loginView">
+  <div class="login-card">
+    <div class="brand"><span class="brand-mark">✦</span><span>MYAI <span class="muted">/ PRIVATE WORKSPACE</span></span></div>
+    <h1 id="authTitle">Welcome back.</h1><p class="muted" id="authSub">Sign in to open your personal AI workspace.</p>
+    <input class="field" id="email" type="email" autocomplete="username" placeholder="Email address">
+    <input class="field" id="password" type="password" autocomplete="current-password" placeholder="Password">
+    <button class="primary" id="loginButton">Sign in</button>
+    <div class="linkrow"><button id="toggleAuth">Need an account? Sign up</button><button id="resetBtn">Forgot password?</button></div>
+    <p id="loginError"></p>
+    <p class="muted" style="font-size:12px">Smarter build: better memory, bigger context, markdown, model picker. Your old chats are kept.</p>
+  </div>
+</section>
+<div id="app">
+ <div class="shell">
+  <aside class="sidebar">
+   <div class="brand" style="font-size:13px"><span class="brand-mark">✦</span> MYAI</div>
+   <button class="new-chat" id="newChat"><span>＋</span> New conversation</button>
+   <input class="search" id="search" placeholder="Search chats…">
+   <div class="chat-list" id="chatList"></div>
+   <div class="side-bottom">
+     <div class="account" id="accountName"></div>
+     <div class="row"><button class="ghost" id="memoryButton">Memory</button><button class="ghost" id="exportButton">Export</button><button class="ghost" id="logoutButton">Log out</button></div>
+   </div>
+  </aside>
+  <main class="main">
+   <header class="topbar">
+     <div id="chatHeading" style="font-weight:700">New conversation</div>
+     <div class="controls">
+       <label>Mode <select id="mode"><option value="smart">Smart</option><option value="fast">Fast</option><option value="deep">Deep think</option><option value="code">Code</option></select></label>
+       <span class="status" id="connectionStatus">Ready</span>
+     </div>
+   </header>
+   <div class="content">
+    <div class="welcome" id="welcome">
+     <div class="orb">✦</div><h2>What can I help you with?</h2><p class="muted">Smarter MyAI remembers you, uses more context, and explains clearly.</p>
+     <div class="suggestions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px" id="sugs"></div>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="composer-wrap"><div class="composer"><textarea id="prompt" rows="1" placeholder="Message MyAI… (Enter to send, Shift+Enter for new line)"></textarea><button class="stop" id="stopButton">Stop</button><button class="primary send" id="sendButton">↑</button></div><div class="hint">MyAI can make mistakes. Check important information.</div></div>
+   </div>
+  </main>
+ </div>
+</div>
+<div id="memModal" class="modal-back hidden"><div class="modal">
+  <h3 style="margin:0">What should MyAI remember?</h3><p class="muted" style="font-size:13px">This makes answers smarter and more personal. Stored in Firestore.</p>
+  <label class="muted">Name</label><textarea id="mName" placeholder="Ian"></textarea>
+  <label class="muted">About you / work</label><textarea id="mAbout" placeholder="Student, building websites, likes concise examples…"></textarea>
+  <label class="muted">Preferences / goals</label><textarea id="mLikes" placeholder="Prefer step-by-step, JavaScript examples, no fluff…"></textarea>
+  <div class="row" style="margin-top:12px"><button class="primary" id="saveMem" style="flex:1">Save memory</button><button class="ghost" id="closeMem">Close</button></div>
+</div></div>
+<script>
+// === KEEP YOUR EXISTING CONFIG ===
+const firebaseConfig = {
+ apiKey:"AIzaSyApBrPRZk7e7M6uOU3-eNcX7nmH_sXkjKI",
+ authDomain:"ink-and-moon.firebaseapp.com",
+ projectId:"ink-and-moon",
+ storageBucket:"ink-and-moon.firebasestorage.app",
+ messagingSenderId:"943504163747",
+ appId:"1:943504163747:web:8eb03578746b4737d01016"
+};
+const WORKER_URL="https://myai-backend.ilevesque.workers.dev";
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.firestore();
+let me=null, activeChatId=null, chatGroups={}, memory={name:"",about:"",likes:""}, isSignup=false, stopFlag=false;
+const $=id=>document.getElementById(id);
+
+const SUGS=["Explain a difficult topic simply","Brainstorm a project idea","Help me write code","Plan my week","Review my text"];
+$("sugs").innerHTML=SUGS.map(s=>`<button data-p="${s}" style="border:1px solid var(--line);background:#101b2c;color:#b9cbe2;border-radius:999px;padding:9px 13px;font-size:12px">${s}</button>`).join("");
+document.querySelectorAll("#sugs button").forEach(b=>b.onclick=()=>{ $("prompt").value=b.dataset.p+" — "; $("prompt").focus(); });
+
+function showLogin(e=""){$("loginView").style.display="grid";$("app").style.display="none";$("loginError").textContent=e}
+function showApp(){$("loginView").style.display="none";$("app").style.display="block"}
+$("toggleAuth").onclick=()=>{isSignup=!isSignup;$("authTitle").textContent=isSignup?"Create your workspace.":"Welcome back.";$("loginButton").textContent=isSignup?"Sign up":"Sign in";$("toggleAuth").textContent=isSignup?"Have an account? Sign in":"Need an account? Sign up";};
+$("resetBtn").onclick=async()=>{const e=$("email").value.trim();if(!e)return showLogin("Enter your email to reset.");try{await auth.sendPasswordResetEmail(e);showLogin("Reset email sent.");}catch(err){showLogin(err.message)}};
+async function doAuth(){const e=$("email").value.trim(),p=$("password").value;try{if(isSignup)await auth.createUserWithEmailAndPassword(e,p);else await auth.signInWithEmailAndPassword(e,p);}catch(err){showLogin(err.message)}}
+$("loginButton").onclick=doAuth;$("password").addEventListener("keydown",e=>{if(e.key==="Enter")doAuth()});
+$("logoutButton").onclick=()=>auth.signOut();
+
+auth.onAuthStateChanged(async u=>{me=u;if(!u){showLogin();return}showApp();$("accountName").textContent=u.email||"Signed in";await loadMemory();await loadChats();if(!activeChatId)newChat(false);});
+
+async function loadMemory(){try{const d=await db.collection("myai_memory").doc(me.uid).get();if(d.exists)memory={name:"",about:"",likes:"",...d.data()};}catch(e){console.warn(e)}}
+async function loadChats(){try{const s=await db.collection("myai_chats").where("uid","==",me.uid).limit(300).get();chatGroups={};s.docs.forEach(doc=>{const x={id:doc.id,...doc.data()};(chatGroups[x.chatId||"legacy"]??=[]).push(x)});Object.values(chatGroups).forEach(a=>a.sort((x,y)=>(x.at?.seconds||x.at?.getTime?.()/1000||0)-(y.at?.seconds||y.at?.getTime?.()/1000||0))));renderChatList();const ids=sortedIds();if(ids.length)openChat(ids[0]);}catch(e){console.warn(e)}}
+function ts(x){return x?.at?.seconds||(x?.at instanceof Date?x.at.getTime()/1000:0)||0}
+function sortedIds(){const q=$("search").value?.toLowerCase()||"";return Object.keys(chatGroups).filter(id=>!q||titleFor(chatGroups[id]).toLowerCase().includes(q)).sort((a,b)=>ts(chatGroups[b].at(-1))-ts(chatGroups[a].at(-1)))}
+function titleFor(items){const m=(items||[]).find(x=>x.from==="user");return m?(m.text||"New conversation").replace(/\s+/g," ").slice(0,42):"New conversation"}
+function renderChatList(){const l=$("chatList");l.replaceChildren();sortedIds().forEach(id=>{const r=document.createElement("div");r.className="chat-row"+(id===activeChatId?" active":"");const b=document.createElement("button");b.className="chat-title";b.textContent=titleFor(chatGroups[id]);b.onclick=()=>openChat(id);const d=document.createElement("button");d.className="delete";d.textContent="×";d.onclick=()=>deleteChat(id);r.append(b,d);l.append(r);});}
+$("search").addEventListener("input",renderChatList);
+function newChat(greet=true){activeChatId="chat_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8);$("messages").replaceChildren();$("welcome").classList.remove("hidden");$("chatHeading").textContent="New conversation";renderChatList();if(greet)addMessage("assistant","New conversation ready. Tell me your goal and I'll plan with you.")}
+function openChat(id){activeChatId=id;$("messages").replaceChildren();$("welcome").classList.add("hidden");(chatGroups[id]||[]).forEach(x=>addMessage(x.from,x.text,true));$("chatHeading").textContent=titleFor(chatGroups[id]||[]);renderChatList();}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function md(t){let h=esc(t);h=h.replace(/```(\w*)\n([\s\S]*?)```/g,(m,l,c)=>`<pre><code>${c.replace(/<br>/g,"\n")}</code></pre>`);h=h.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");h=h.replace(/`([^`]+)`/g,"<code>$1</code>");h=h.split("\n").map(line=>line.trim().startsWith("- ")||line.trim().startsWith("* ")?"<ul><li>"+line.trim().slice(2)+"</li></ul>":line?`<p>${line}</p>`:"").join("");return `<div class="msg-body">${h}</div>`}
+function addMessage(role,text,instant=false){$("welcome").classList.add("hidden");const el=document.createElement("div");el.className="message "+(role==="user"?"user":"ai");el.innerHTML=`<span class="who">${role==="user"?"You":"MyAI"}</span><div class="body">${role==="user"?esc(text):md(text)}</div>`;const acts=document.createElement("div");acts.className="msg-actions";const cp=document.createElement("button");cp.textContent="Copy";cp.onclick=()=>navigator.clipboard.writeText(text);acts.append(cp);el.append(acts);$("messages").append(el);el.scrollIntoView({block:"nearest"});return el}
+async function saveMessage(from,text){const rec={uid:me.uid,chatId:activeChatId,from,text,at:new Date()};try{const ref=await db.collection("myai_chats").add(rec);(chatGroups[activeChatId]??=[]).push({...rec,id:ref.id,at:{seconds:Date.now()/1000}});renderChatList();$("chatHeading").textContent=titleFor(chatGroups[activeChatId]);}catch(e){console.warn(e)}}
+async function deleteChat(id){if(!confirm("Delete this conversation?"))return;try{const s=await db.collection("myai_chats").where("uid","==",me.uid).where("chatId","==",id).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();delete chatGroups[id];if(activeChatId===id)newChat(false);renderChatList();}catch(e){alert(e.message)}}
+$("newChat").onclick=()=>newChat();
+$("exportButton").onclick=()=>{const items=chatGroups[activeChatId]||[];const txt=items.map(m=>(m.from==="user"?"You: ":"MyAI: ")+m.text).join("\n\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));a.download="myai-chat.txt";a.click();};
+$("memoryButton").onclick=()=>{$("mName").value=memory.name||"";$("mAbout").value=memory.about||"";$("mLikes").value=memory.likes||"";$("memModal").classList.remove("hidden")};
+$("closeMem").onclick=()=>$("memModal").classList.add("hidden");
+$("saveMem").onclick=async()=>{memory={name:$("mName").value,about:$("mAbout").value,likes:$("mLikes").value};try{await db.collection("myai_memory").doc(me.uid).set({...memory,updated:new Date()});$("memModal").classList.add("hidden")}catch(e){alert(e.message)}};
+
+function buildSystem(mode){
+ const date=new Date().toDateString();
+ const mem=`User name: ${memory.name||"unknown"}. About: ${memory.about||"none"}. Preferences/goals: ${memory.likes||"none"}.`;
+ const style={smart:"Be accurate, clear, and helpful. Explain reasoning briefly, give examples, end with a useful next step.",fast:"Be fast and concise. Short answers unless detail requested.",deep:"Think step-by-step. Consider alternatives, tradeoffs, and edge cases. Show your reasoning then conclude.",code:"You are a senior engineer. Provide working code, explain key parts, mention how to run/test it."}[mode]||"";
+ return `You are MyAI, a helpful personal AI assistant. Today is ${date}. ${mem} ${style} Be honest about uncertainty. Format with markdown, code blocks where useful.`;
+}
+
+async function send(){
+ const input=$("prompt"),text=input.value.trim();if(!text||!me)return;stopFlag=false;
+ input.value="";input.style.height="auto";addMessage("user",text);await saveMessage("user",text);
+ $("stopButton").style.display="block";$("connectionStatus").textContent="Working…";
+ const mode=$("mode").value;
+ // smarter context: last 30 msgs, 6000 chars each (old backend just ignores extra fields)
+ const history=(chatGroups[activeChatId]||[]).slice(-30).map(m=>({role:m.from==="user"?"user":"assistant",content:String(m.text||"").slice(0,6000)}));
+ const pending=addMessage("assistant","Thinking…");
+ try{
+  const token=await me.getIdToken();
+  const res=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({messages:[{role:"system",content:buildSystem(mode)},...history],mode})});
+  const data=await res.json();
+  if(stopFlag)throw new Error("Stopped.");
+  if(!res.ok)throw new Error(data.error||("HTTP "+res.status));
+  if(!data.reply)throw new Error("Empty reply from AI service.");
+  pending.remove();addMessage("assistant",data.reply);await saveMessage("assistant",data.reply);
+  $("connectionStatus").textContent="Response received";
+ }catch(e){pending.remove();const msg="I couldn't complete that: "+e.message+" — check Worker logs / OPENAI_API_KEY, or try Fast mode.";addMessage("assistant",msg);await saveMessage("assistant",msg);$("connectionStatus").textContent="Connection issue";}
+ $("stopButton").style.display="none";
+}
+$("sendButton").onclick=send;$("stopButton").onclick=()=>{stopFlag=true;$("stopButton").style.display="none"};
+$("prompt").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+$("prompt").addEventListener("input",e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,180)+"px"});
+</script>
+<script>window.__CF$cv$params={r:'a5645743bc762b19',t:'MTc5Mzk3MDY1Mg==',u:'01a1b0fbc7087334aebf56b7f3e64c13',ut:'V393AxVBY2amUUSbCnK_Qc3RegYCCKgdHeKExSWR_j0-1793970652-1.2.1.1-gOfCwtcoNjhWE9OJyHNZVaEEA1QBAvKxUGxWawwg_fqYC7XnyhwTzxE50zGN2RcSCudGco_UGwYteqJMdBSpfH_fAk72FqiYUbEAlVhV_sM',i:60};(function(){if(!document.body)return;var l=window.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/precursor/main.js?ray=a5645743bc762b19',s=document.createElement('script');s.src=o?new URL(u,o).href:u;document.head.appendChild(s);})();</script></body>
+</html>
