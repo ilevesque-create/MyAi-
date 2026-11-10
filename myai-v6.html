@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080d18">
+<title>MyAI — Personal AI workspace</title>
+<style>
+:root{color-scheme:dark;--bg:#080d18;--side:#0b1220;--panel:#101a2b;--panel2:#16243a;--line:#253650;--text:#edf3ff;--muted:#8fa2bd;--accent:#8b9cff;--cyan:#6de0e8;--good:#72d8b0;--danger:#ff879a;--shadow:0 20px 70px #0007}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:14px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+#loginView{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 18% 10%,#293c72 0,transparent 35%),radial-gradient(ellipse at 90% 85%,#164b5a 0,transparent 32%),var(--bg)}
+.login-card{width:min(440px,100%);padding:38px;border:1px solid #ffffff18;border-radius:24px;background:#111b2def;box-shadow:var(--shadow);backdrop-filter:blur(18px)}
+.brand{display:flex;align-items:center;gap:11px;font-weight:850;letter-spacing:.12em;font-size:13px}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--accent));color:#07101e;font-size:20px;box-shadow:0 8px 24px #6bdbeb33}
+.login-card h1{font-size:30px;letter-spacing:-.04em;margin:12px 0 4px}.muted{color:var(--muted)}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:800;color:var(--cyan);margin-top:30px}
+.field{width:100%;border:1px solid var(--line);border-radius:12px;background:#0b1424;color:var(--text);padding:13px 14px;margin-top:12px}.primary,.google-btn{border:0;border-radius:12px;padding:12px 16px;font-weight:750}.primary{background:linear-gradient(110deg,#70dce7,#9aa5ff);color:#07111f;width:100%;margin-top:16px}.google-btn{width:100%;margin-top:10px;background:#f5f7fc;color:#182238}.linkrow{display:flex;justify-content:space-between;gap:12px;margin-top:15px}.linkrow button{border:0;background:none;color:#aab7ff;font-size:12px}.error{color:var(--danger);min-height:20px;font-size:12px}
+#app{display:none;min-height:100vh}.shell{display:grid;grid-template-columns:286px minmax(0,1fr);min-height:100vh}
+.sidebar{background:var(--side);border-right:1px solid var(--line);padding:19px 15px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;z-index:5}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:0 5px 20px}.icon-btn{width:37px;height:37px;border-radius:11px;border:1px solid var(--line);background:#142039;color:#d2def3;font-size:19px}
+.new-chat{width:100%;padding:12px 14px;border:1px solid #7587ff55;border-radius:12px;background:linear-gradient(110deg,#25345a,#1a2945);text-align:left;font-weight:750}
+.search{width:100%;margin:13px 0 17px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0a1221;color:var(--text)}
+.section-label{font-size:10px;color:#70839f;font-weight:850;letter-spacing:.15em;padding:5px 8px 9px}.chat-list{overflow:auto;flex:1;min-height:60px}.chat-item{display:flex;align-items:center;gap:7px;padding:9px 10px;border-radius:10px;color:#aebdd2;font-size:12px;margin-bottom:4px;cursor:pointer}.chat-item:hover,.chat-item.active{background:#1a2941;color:#fff}.chat-item .chat-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.chat-item button{border:0;background:none;color:#a7b6d0;opacity:.8;padding:2px 5px}.side-bottom{border-top:1px solid var(--line);padding-top:14px}.account{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 5px 12px}.side-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.side-actions button{padding:9px 8px;border:1px solid var(--line);border-radius:10px;background:#121e32;color:#b8c7dc;font-size:12px}
+.main{min-width:0;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% -20%,#1a3151 0,transparent 42%),var(--bg)}
+.topbar{height:70px;border-bottom:1px solid #ffffff10;display:flex;align-items:center;justify-content:space-between;padding:0 34px;gap:14px}.top-left{display:flex;align-items:center;gap:12px;min-width:0}.workspace-label{font-size:10px;letter-spacing:.18em;color:#7e91ad;font-weight:850}.chat-heading{font-weight:750;font-size:14px;max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.top-right{display:flex;align-items:center;gap:12px}.status{font-size:11px;color:var(--good);white-space:nowrap}.status:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:7px}.mode-select{background:#111d31;color:#dce7fa;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.content{width:min(1020px,100%);margin:0 auto;padding:28px 32px 15px;flex:1;display:flex;flex-direction:column;min-height:0}.welcome{padding:42px 0 28px}.welcome .eyebrow{margin:0 0 12px}.welcome h1{font-size:clamp(32px,4.5vw,50px);line-height:1.08;letter-spacing:-.06em;margin:0;max-width:690px}.welcome h1 span{background:linear-gradient(100deg,#7ce0e9,#a4a8ff);-webkit-background-clip:text;background-clip:text;color:transparent}.welcome p{color:var(--muted);font-size:15px;max-width:590px;margin:15px 0 26px}.prompt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:720px}.prompt-card{padding:15px 16px;border:1px solid var(--line);border-radius:15px;background:#111c2eaa;text-align:left;transition:.18s}.prompt-card:hover{transform:translateY(-2px);border-color:#778aff88;background:#17253b}.prompt-card strong{display:block;font-size:13px;margin-bottom:3px}.prompt-card span{font-size:11px;color:var(--muted)}
+.messages{display:flex;flex-direction:column;gap:18px;padding:18px 0 26px}.message{max-width:88%;padding:16px 18px;border-radius:17px;overflow-wrap:anywhere}.message.user{align-self:flex-end;background:linear-gradient(125deg,#34456c,#263958);border:1px solid #7187c955;border-bottom-right-radius:5px;white-space:pre-wrap}.message.ai{align-self:flex-start;background:#111c2dcc;border:1px solid var(--line);border-bottom-left-radius:5px;box-shadow:0 10px 30px #0002}.who{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--cyan);font-weight:850;display:block;margin-bottom:9px}.msg-body p{margin:0 0 10px}.msg-body p:last-child{margin-bottom:0}.msg-body ul,.msg-body ol{padding-left:22px}.msg-body pre{white-space:pre-wrap;overflow:auto;background:#080f1c;border:1px solid #293b57;padding:13px;border-radius:10px}.msg-body code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#b6e7f2}.msg-actions{display:flex;gap:7px;margin-top:12px}.msg-actions button{border:1px solid var(--line);background:#18253a;color:#aebed5;border-radius:8px;padding:5px 9px;font-size:10px}.attachment-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #7187c955;background:#182944;border-radius:8px;padding:5px 9px;margin-top:9px;font-size:11px;color:#d7e6ff}
+.composer-wrap{position:sticky;bottom:0;padding:15px 0 10px;background:linear-gradient(transparent,var(--bg) 20%)}.composer{display:flex;align-items:flex-end;gap:9px;padding:10px;border:1px solid #536b91;border-radius:18px;background:#111c2e;box-shadow:0 14px 45px #0005}.composer textarea{flex:1;resize:none;min-height:44px;max-height:180px;border:0;outline:0;background:transparent;color:var(--text);padding:10px 8px}.composer textarea::placeholder{color:#7487a3}.tool-btn{width:42px;height:43px;border:1px solid var(--line);border-radius:12px;background:#192840;color:#c7d7f2;font-size:18px}.send{width:43px;height:43px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--cyan),#9aa5ff);color:#07111e;font-size:18px;font-weight:900}.send:disabled{opacity:.45;cursor:not-allowed}.composer-note{text-align:center;color:#637793;font-size:10px;margin-top:8px}.typing{color:var(--cyan);font-size:12px;padding:0 4px}.file-preview{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}.file-pill{display:flex;align-items:center;gap:8px;background:#17263d;border:1px solid #344968;border-radius:9px;padding:6px 9px;font-size:11px;color:#dce8fa}.file-pill button{border:0;background:none;color:#ff9baa;font-size:15px;padding:0}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1b2b43;border:1px solid #405a7d;border-radius:12px;padding:10px 15px;color:#eaf2ff;box-shadow:var(--shadow);z-index:20;font-size:12px}
+.hidden{display:none!important}
+@media(max-width:760px){.shell{grid-template-columns:1fr}.sidebar{position:relative;height:auto;min-height:0;padding:12px;border-right:0;border-bottom:1px solid var(--line)}.side-head{padding-bottom:10px}.chat-list{max-height:110px}.side-bottom{display:none}.topbar{height:60px;padding:0 15px}.content{padding:16px 14px}.welcome{padding:24px 0}.message{max-width:96%}.prompt-grid{grid-template-columns:1fr}.top-right .status{display:none}.chat-heading{max-width:42vw}.composer{gap:6px;padding:8px}.tool-btn,.send{width:39px;height:40px}}
+</style>
+</head>
+<body>
+<section id="loginView">
+ <div class="login-card">
+  <div class="brand"><span class="brand-mark">✦</span><span>MYAI <span class="muted">/ PRIVATE WORKSPACE</span></span></div>
+  <div class="eyebrow">A clearer space to think</div>
+  <h1 id="authTitle">Welcome back.</h1>
+  <p class="muted" id="authSub">Sign in to open your personal AI workspace.</p>
+  <input class="field" id="email" type="email" autocomplete="username" placeholder="Email address">
+  <input class="field" id="password" type="password" autocomplete="current-password" placeholder="Password">
+  <button class="primary" id="loginButton">Sign in</button>
+  <button class="google-btn" id="googleButton">Continue with Google</button>
+  <div class="linkrow"><button id="toggleAuth">Need an account? Sign up</button><button id="resetBtn">Forgot password?</button></div>
+  <p class="error" id="loginError" role="alert"></p>
+  <p class="muted" style="font-size:11px">Your account and conversations are private to your signed-in workspace.</p>
+ </div>
+</section>
+<div id="app">
+ <div class="shell">
+  <aside class="sidebar">
+   <div class="side-head"><div class="brand"><span class="brand-mark">✦</span><span>MYAI</span></div><button class="icon-btn" id="newChatTop" title="New chat">＋</button></div>
+   <button class="new-chat" id="newChat">＋ &nbsp; New conversation</button>
+   <input class="search" id="searchChats" placeholder="⌕  Search conversations">
+   <div class="section-label">YOUR CHATS</div>
+   <div class="chat-list" id="chatList"></div>
+   <div class="side-bottom"><p class="account" id="accountEmail"></p><div class="side-actions"><button id="exportBtn">Export chats</button><button id="clearBtn">Clear chats</button><button id="logoutBtn">Sign out</button></div></div>
+  </aside>
+  <main class="main">
+   <header class="topbar"><div class="top-left"><div><div class="workspace-label">PERSONAL AI WORKSPACE</div><div class="chat-heading" id="chatHeading">A fresh start</div></div></div><div class="top-right"><span class="status" id="connectionStatus">connected</span><select class="mode-select" id="modelSelect" aria-label="AI mode"><option value="smart">Smart</option><option value="fast">Fast</option><option value="deep">Deep</option><option value="code">Code</option></select></div></header>
+   <section class="content">
+    <div class="welcome" id="welcome"><div class="eyebrow">YOUR AI, YOUR WORKFLOW</div><h1>What can we <span>work through</span> today?</h1><p>Ask a question, explore an idea, learn a new skill, or build something. MyAI is ready to help you think clearly and make progress.</p>
+     <div class="prompt-grid">
+      <button class="prompt-card" data-prompt="Help me break a big goal into a realistic plan."><strong>✦ Plan something</strong><span>Turn a big goal into clear next steps</span></button>
+      <button class="prompt-card" data-prompt="Teach me a difficult topic in a simple way, with examples."><strong>⌘ Learn a topic</strong><span>Understand something step by step</span></button>
+      <button class="prompt-card" data-prompt="Help me brainstorm a useful app or software idea."><strong>◈ Build an idea</strong><span>Explore an idea and make it practical</span></button>
+      <button class="prompt-card" data-prompt="Review this code and help me improve it."><strong>{ } Work with code</strong><span>Debug, explain, and improve code</span></button>
+     </div>
+    </div>
+    <div class="messages" id="messages"></div><div id="typing" class="typing hidden">MyAI is thinking…</div>
+    <div class="composer-wrap">
+     <div id="filePreview" class="file-preview"></div>
+     <div class="composer"><input id="fileInput" type="file" class="hidden" accept=".txt,.md,.csv,.json,.html,.css,.js,.py,.xml,.log"><button class="tool-btn" id="attachBtn" title="Attach a text or code file">＋</button><textarea id="messageInput" rows="1" placeholder="Message MyAI…  (Enter to send, Shift + Enter for a new line)"></textarea><button class="send" id="sendBtn" title="Send message">↑</button></div>
+     <div class="composer-note">Attach TXT, Markdown, CSV, JSON, or code files · MyAI can make mistakes, so check important information.</div>
+    </div>
+   </section>
+  </main>
+ </div>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* MyAI V6 — Firebase Auth + Firestore + Cloudflare Worker / Groq */
+const firebaseConfig = {
+  apiKey: "AIzaSyApBrPRZk7e7M6uOU3-eNcX7nmH_sXkjKI",
+  authDomain: "ink-and-moon.firebaseapp.com",
+  projectId: "ink-and-moon",
+  storageBucket: "ink-and-moon.firebasestorage.app",
+  messagingSenderId: "943504163747",
+  appId: "1:943504163747:web:8eb03578746b4737d01016",
+  measurementId: "G-94XF62EG9X"
+};
+const WORKER_URL = "https://myai-backend.ilevesque.workers.dev";
+const MAX_FILE_CHARS = 60000;
+const appFirebase = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const $ = id => document.getElementById(id);
+let currentUser = null, chats = [], currentChatId = null, unsubscribeChats = null, sending = false, mode = "smart", pendingFiles = [];
+
+const loginView=$("loginView"), appView=$("app"), emailEl=$("email"), passEl=$("password"), loginError=$("loginError");
+const messagesEl=$("messages"), inputEl=$("messageInput"), sendBtn=$("sendBtn"), welcome=$("welcome");
+function setError(message){loginError.textContent=message||""}
+function toast(message){const t=$("toast");t.textContent=message;t.classList.remove("hidden");clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.add("hidden"),2600)}
+function showLogin(){loginView.style.display="grid";appView.style.display="none"}
+function showApp(){loginView.style.display="none";appView.style.display="block";$("accountEmail").textContent=currentUser.email||"Signed in"}
+function setBusy(value){sending=value;sendBtn.disabled=value;$("typing").classList.toggle("hidden",!value);$("connectionStatus").textContent=value?"working":"connected"}
+function chatRef(){return db.collection("users").doc(currentUser.uid).collection("chats")}
+function activeChat(){return chats.find(c=>c.id===currentChatId)||null}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderMarkdown(source){
+ let s=escapeHtml(source||"");
+ s=s.replace(/```([\s\S]*?)```/g,(_,code)=>"<pre><code>"+code.trim()+"</code></pre>");
+ s=s.replace(/`([^`]+)`/g,"<code>$1</code>");
+ s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+ s=s.replace(/\*([^*\n]+)\*/g,"<em>$1</em>");
+ const lines=s.split("\n");let out="",list=false;
+ for(const line of lines){if(/^\s*[-*]\s+/.test(line)){if(!list){out+="<ul>";list=true}out+="<li>"+line.replace(/^\s*[-*]\s+/,"")+"</li>";}
+ else{if(list){out+="</ul>";list=false}if(line.trim())out+="<p>"+line+"</p>"}}
+ if(list)out+="</ul>";return out||"<p></p>";
+}
+function renderChats(){
+ const q=$("searchChats").value.toLowerCase();const host=$("chatList");host.innerHTML="";
+ [...chats].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).filter(c=>(c.title||"New conversation").toLowerCase().includes(q)).forEach(c=>{
+  const row=document.createElement("div");row.className="chat-item"+(c.id===currentChatId?" active":"");
+  const name=document.createElement("span");name.className="chat-name";name.textContent=c.title||"New conversation";
+  const rename=document.createElement("button");rename.textContent="✎";rename.title="Rename conversation";rename.onclick=async e=>{e.stopPropagation();const next=prompt("Rename this conversation:",c.title||"New conversation");if(next&&next.trim()){c.title=next.trim().slice(0,70);await saveChat(c)}};
+  const del=document.createElement("button");del.textContent="×";del.title="Delete conversation";del.onclick=async e=>{e.stopPropagation();if(confirm("Delete this conversation?")){await chatRef().doc(c.id).delete();if(currentChatId===c.id)currentChatId=null}};
+  row.append(name,rename,del);row.onclick=()=>{currentChatId=c.id;renderAll()};host.appendChild(row);
+ });
+}
+function renderMessages(){
+ const c=activeChat();messagesEl.innerHTML="";welcome.classList.toggle("hidden",!!(c&&c.messages&&c.messages.length));$("chatHeading").textContent=c?(c.title||"Conversation"):"A fresh start";
+ if(!c)return;
+ (c.messages||[]).forEach(m=>{
+  const box=document.createElement("article");box.className="message "+(m.role==="user"?"user":"ai");
+  if(m.role==="user"){box.textContent=m.content||"";if(m.attachments?.length){const chips=document.createElement("div");m.attachments.forEach(f=>{const chip=document.createElement("span");chip.className="attachment-chip";chip.textContent="📎 "+f.name;chips.appendChild(chip)});box.appendChild(chips)}}
+  else{
+   const who=document.createElement("span");who.className="who";who.textContent="✦ MYAI · "+(m.model||c.mode||mode).toUpperCase();
+   const body=document.createElement("div");body.className="msg-body";body.innerHTML=renderMarkdown(m.content);
+   box.append(who,body);
+   const actions=document.createElement("div");actions.className="msg-actions";
+   const copy=document.createElement("button");copy.textContent="Copy";copy.onclick=()=>navigator.clipboard?.writeText(m.content).then(()=>toast("Copied response")).catch(()=>toast("Copy wasn't available in this browser"));
+   actions.append(copy);box.append(actions);
+  }
+  messagesEl.appendChild(box);
+ });
+ messagesEl.scrollTop=messagesEl.scrollHeight;
+}
+function renderAll(){renderChats();renderMessages()}
+function subscribeChats(){
+ if(unsubscribeChats)unsubscribeChats();
+ unsubscribeChats=chatRef().orderBy("updatedAt","desc").onSnapshot(snapshot=>{
+  chats=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+  if(!currentChatId&&chats.length)currentChatId=chats[0].id;
+  if(currentChatId&&!chats.some(c=>c.id===currentChatId))currentChatId=chats[0]?.id||null;
+  renderAll();$("connectionStatus").textContent="connected";
+ },err=>{console.error(err);$("connectionStatus").textContent="sync issue";toast("Chat sync issue — check Firestore rules")});
+}
+async function createChat(){
+ const doc=chatRef().doc();const now=Date.now();
+ await doc.set({title:"New conversation",messages:[],mode,createdAt:now,updatedAt:now});
+ currentChatId=doc.id;renderAll();inputEl.focus();
+}
+async function saveChat(chat){chat.updatedAt=Date.now();await chatRef().doc(chat.id).set(chat,{merge:true})}
+function systemContext(){
+ return "You are MyAI, a capable general-purpose personal AI assistant. Be accurate, useful, friendly, and clear. Explain complex topics in manageable steps. Use markdown when it improves clarity. If uncertain, say so. Never claim to have browsed the web, opened a link, or performed an action unless a connected tool actually did it. When a user attaches a file, use its extracted text as source material and distinguish facts from assumptions.";
+}
+function renderPendingFiles(){
+ const host=$("filePreview");host.innerHTML="";
+ pendingFiles.forEach((f,i)=>{const pill=document.createElement("span");pill.className="file-pill";pill.textContent="📎 "+f.name;const remove=document.createElement("button");remove.textContent="×";remove.title="Remove attachment";remove.onclick=()=>{pendingFiles.splice(i,1);renderPendingFiles()};pill.appendChild(remove);host.appendChild(pill)});
+}
+async function addFiles(fileList){
+ for(const file of Array.from(fileList||[])){
+  if(pendingFiles.length>=3){toast("You can attach up to 3 files at a time");break}
+  if(file.size>150000){toast(file.name+" is too large (150 KB max)");continue}
+  try{
+   const text=await file.text();
+   if(!text.trim()){toast(file.name+" appears to be empty");continue}
+   const remaining=MAX_FILE_CHARS-pendingFiles.reduce((n,f)=>n+f.text.length,0);
+   if(remaining<=0){toast("Attachment text limit reached");break}
+   pendingFiles.push({name:file.name,type:file.type||"text/plain",text:text.slice(0,remaining)});
+  }catch(e){toast("Couldn't read "+file.name)}
+ }
+ renderPendingFiles();$("fileInput").value="";
+}
+async function send(){
+ const promptText=inputEl.value.trim();if((!promptText&&!pendingFiles.length)||sending||!currentUser)return;
+ try{
+  let chat=activeChat();if(!chat){await createChat();chat=activeChat()}
+  const files=pendingFiles.map(f=>({name:f.name,type:f.type,text:f.text}));
+  const fileContext=files.map(f=>"ATTACHED FILE: "+f.name+"\n"+f.text).join("\n\n");
+  const userMessage={role:"user",content:promptText||"Please review the attached file(s).",attachments:files.map(f=>({name:f.name,type:f.type})),fileContext};
+  chat.messages=chat.messages||[];chat.messages.push(userMessage);
+  if(chat.messages.filter(m=>m.role==="user").length===1)chat.title=(promptText||files[0]?.name||"New conversation").slice(0,48);
+  chat.mode=$("modelSelect").value;mode=chat.mode;inputEl.value="";inputEl.style.height="auto";pendingFiles=[];renderPendingFiles();renderAll();setBusy(true);
+  try{
+   const token=await currentUser.getIdToken();
+   const history=chat.messages.slice(-24).map(m=>({role:m.role,content:m.role==="user"&&m.fileContext?(m.content+"\n\n"+m.fileContext):m.content}));
+   const payload={mode:chat.mode,messages:[{role:"system",content:systemContext()},...history]};
+   const response=await fetch(WORKER_URL,{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify(payload)});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||("Worker request failed ("+response.status+")"));
+   const answer=data.reply||"I couldn't generate a response.";
+   chat.messages.push({role:"assistant",content:answer,model:data.model||""});
+   await saveChat(chat);
+  }catch(err){
+   chat.messages.push({role:"assistant",content:"I couldn't reach MyAI right now.\n\n**"+(err.message||"Unknown error")+"**\n\nCheck that the Cloudflare Worker is deployed and that its Groq secret and account restriction are configured."});
+   try{await saveChat(chat)}catch(saveErr){console.error(saveErr)}
+  }finally{setBusy(false);renderAll();inputEl.focus()}
+ }catch(err){console.error(err);setBusy(false);toast("Couldn't start the conversation. Check your connection.")}
+}
+$("loginButton").onclick=async()=>{
+ setError("");const email=emailEl.value.trim(),password=passEl.value;
+ try{if(!email||!password)throw new Error("Enter your email and password.");if($("authTitle").textContent==="Create your workspace.")await auth.createUserWithEmailAndPassword(email,password);else await auth.signInWithEmailAndPassword(email,password)}
+ catch(e){setError(e.message)}
+};
+let signup=false;
+$("toggleAuth").onclick=()=>{signup=!signup;$("authTitle").textContent=signup?"Create your workspace.":"Welcome back.";$("authSub").textContent=signup?"Create an account for your private workspace.":"Sign in to open your personal AI workspace.";$("loginButton").textContent=signup?"Create account":"Sign in";$("toggleAuth").textContent=signup?"Already have an account? Sign in":"Need an account? Sign up";setError("")};
+$("googleButton").onclick=async()=>{try{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider)}catch(e){setError(e.message)}};
+$("resetBtn").onclick=async()=>{const email=emailEl.value.trim();if(!email){setError("Enter your email address first.");return}try{await auth.sendPasswordResetEmail(email);setError("Password reset email sent.")}catch(e){setError(e.message)}};
+$("logoutBtn").onclick=()=>auth.signOut();
+$("newChat").onclick=$("newChatTop").onclick=()=>createChat().catch(e=>toast(e.message));
+$("sendBtn").onclick=send;
+$("modelSelect").onchange=e=>mode=e.target.value;
+$("searchChats").oninput=renderChats;
+$("attachBtn").onclick=()=>$("fileInput").click();
+$("fileInput").onchange=e=>addFiles(e.target.files);
+$("messageInput").addEventListener("input",()=>{inputEl.style.height="auto";inputEl.style.height=Math.min(inputEl.scrollHeight,180)+"px"});
+$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+document.querySelectorAll("[data-prompt]").forEach(b=>b.onclick=()=>{inputEl.value=b.dataset.prompt;inputEl.focus();send()});
+$("clearBtn").onclick=async()=>{if(!confirm("Delete all saved conversations? This cannot be undone."))return;try{const snap=await chatRef().get();const batch=db.batch();snap.docs.forEach(d=>batch.delete(d.ref));await batch.commit();currentChatId=null;toast("All chats cleared")}catch(e){toast("Couldn't clear chats: "+e.message)}};
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(chats,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="myai-conversations.json";a.click();URL.revokeObjectURL(url)};
+auth.onAuthStateChanged(user=>{
+ currentUser=user;
+ if(user){showApp();subscribeChats()}else{if(unsubscribeChats)unsubscribeChats();chats=[];currentChatId=null;showLogin()}
+});
+</script>
+</body>
+</html>
